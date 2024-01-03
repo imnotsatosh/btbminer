@@ -5,6 +5,12 @@ else
 JANSSON_INCLUDES=
 endif
 
+CCLD = g++
+
+CFLAGS = -g -fpermissive -O0
+
+RANDOMX_LIB = -L./randomx -lrandomx
+
 EXTRA_DIST	= example-cfg.json nomacro.pl
 
 SUBDIRS		= compat
@@ -31,7 +37,7 @@ minerd_SOURCES += sha2-ppc.S scrypt-ppc.S
 endif
 endif
 minerd_LDFLAGS	= $(PTHREAD_FLAGS)
-minerd_LDADD	= @LIBCURL@ @JANSSON_LIBS@ @PTHREAD_LIBS@ @WS2_LIBS@
+minerd_LDADD	= @LIBCURL@ @JANSSON_LIBS@ @PTHREAD_LIBS@ @WS2_LIBS@ $(RANDOMX_LIB)
 minerd_CFLAGS	= -fno-strict-aliasing
 minerd_CPPFLAGS	= @LIBCURL_CPPFLAGS@ $(JANSSON_INCLUDES) $(PTHREAD_FLAGS)
 

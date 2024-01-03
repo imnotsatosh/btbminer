@@ -10,7 +10,7 @@
 
 #include "cpuminer-config.h"
 #include "miner.h"
-// #include "randomx/randomx.h"
+#include "randomx/randomx.h"
 #include <string.h>
 #include <inttypes.h>
 
@@ -645,58 +645,58 @@ int scanhash_sha256d(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 	return 0;
 }
 
-// int scanhash_randomx(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
-// 					 uint32_t max_nonce, unsigned long *hashes_done)
-// {
-// 	randomx_flags flags = RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_ARGON2_SSSE3 | RANDOMX_FLAG_ARGON2_AVX2;
-// 	randomx_cache *cache = randomx_alloc_cache(flags);
-// 	if (!cache)
-// 	{
-// 		applog(LOG_ERR, "randomx_alloc_cache() failed");
-// 		return 0;
-// 	}
-// 	uint32_t n = pdata[19] - 1;
-// 	const uint32_t first_nonce = pdata[19];
-// 	uint8_t seed[32];
-// 	pdata[19] = 0;
-// 	sha256d(seed, (unsigned char *)pdata, 80);
-// 	randomx_init_cache(cache, &seed, sizeof(seed));
+int scanhash_randomx(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
+					 uint32_t max_nonce, unsigned long *hashes_done)
+{
+	randomx_flags flags = RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_ARGON2_SSSE3 | RANDOMX_FLAG_ARGON2_AVX2;
+	randomx_cache *cache = randomx_alloc_cache(flags);
+	if (!cache)
+	{
+		applog(LOG_ERR, "randomx_alloc_cache() failed");
+		return 0;
+	}
+	uint32_t n = pdata[19] - 1;
+	const uint32_t first_nonce = pdata[19];
+	uint8_t seed[32];
+	pdata[19] = 0;
+	sha256d(seed, (unsigned char *)pdata, 80);
+	randomx_init_cache(cache, &seed, sizeof(seed));
 
-// 	// initialize dataset
+	// initialize dataset
 
-// 	randomx_dataset *dataset = randomx_alloc_dataset(flags);
-// 	if (!dataset)
-// 	{
-// 		applog(LOG_ERR, "randomx_alloc_dataset() failed");
-// 		randomx_release_cache(cache);
-// 		return 0;
-// 	}
-// 	uint32_t datasetItemCount = randomx_dataset_item_count();
-// 	randomx_init_dataset(dataset, cache, 0, datasetItemCount);
-// 	randomx_release_cache(cache);
+	randomx_dataset *dataset = randomx_alloc_dataset(flags);
+	if (!dataset)
+	{
+		applog(LOG_ERR, "randomx_alloc_dataset() failed");
+		randomx_release_cache(cache);
+		return 0;
+	}
+	uint32_t datasetItemCount = randomx_dataset_item_count();
+	randomx_init_dataset(dataset, cache, 0, datasetItemCount);
+	randomx_release_cache(cache);
 
-// 	randomx_vm *myMachine = randomx_create_vm(flags, 0, dataset);
-// 	if (!myMachine)
-// 	{
-// 		applog(LOG_ERR, "randomx_create_vm() failed");
-// 		randomx_release_dataset(dataset);
-// 		return 0;
-// 	}
-// 	uint32_t hash[8] __attribute__((aligned(32)));
-// 	int suc = 0;
-// 	do
-// 	{
-// 		pdata[19] = ++n;
-// 		randomx_calculate_hash(myMachine, &pdata, 80, hash);
-// 		if (fulltest(hash, ptarget))
-// 		{
-// 			*hashes_done = n - first_nonce + 1;
-// 			suc = 1;
-// 			break;
-// 		}
-// 	} while (n < max_nonce && !work_restart[thr_id].restart);
+	randomx_vm *myMachine = randomx_create_vm(flags, 0, dataset);
+	if (!myMachine)
+	{
+		applog(LOG_ERR, "randomx_create_vm() failed");
+		randomx_release_dataset(dataset);
+		return 0;
+	}
+	uint32_t hash[8] __attribute__((aligned(32)));
+	int suc = 0;
+	do
+	{
+		pdata[19] = ++n;
+		randomx_calculate_hash(myMachine, &pdata, 80, hash);
+		if (fulltest(hash, ptarget))
+		{
+			*hashes_done = n - first_nonce + 1;
+			suc = 1;
+			break;
+		}
+	} while (n < max_nonce && !work_restart[thr_id].restart);
 
-// 	randomx_destroy_vm(myMachine);
-// 	randomx_release_dataset(dataset);
-// 	return suc;
-// }
+	randomx_destroy_vm(myMachine);
+	randomx_release_dataset(dataset);
+	return suc;
+}
