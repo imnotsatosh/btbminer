@@ -659,7 +659,24 @@ int scanhash_randomx(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 	const uint32_t first_nonce = pdata[19];
 	uint8_t seed[32];
 	pdata[19] = 0;
+	// char pdata_hex[161] = {0};
+	// bin2hex(pdata_hex, (unsigned char *)pdata, 80);
+	// applog(LOG_INFO, "pdata_for_seed: %s", pdata_hex);
 	sha256d(seed, (unsigned char *)pdata, 80);
+
+	// char seed_hex[65] = {0};
+	// bin2hex(seed_hex, (unsigned char *)seed, 32);
+
+	// applog(LOG_INFO, "seed: %s", seed_hex);
+	// char target_str[65] = {0};
+	// uint32_t target_be[8];
+	// for (int i = 0; i < 8; i++)
+	// {
+	// 	be32enc(target_be + i, ptarget[7 - i]);
+	// }
+	// bin2hex(target_str, (unsigned char *)target_be, 32);
+	// applog(LOG_INFO, "target: %s", target_str);
+
 	randomx_init_cache(cache, &seed, sizeof(seed));
 
 	// initialize dataset
@@ -675,8 +692,8 @@ int scanhash_randomx(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 	randomx_init_dataset(dataset, cache, 0, datasetItemCount);
 	randomx_release_cache(cache);
 
-	randomx_vm *myMachine = randomx_create_vm(flags, 0, dataset);
-	if (!myMachine)
+	randomx_vm *vm = randomx_create_vm(flags, 0, dataset);
+	if (!vm)
 	{
 		applog(LOG_ERR, "randomx_create_vm() failed");
 		randomx_release_dataset(dataset);
@@ -687,16 +704,23 @@ int scanhash_randomx(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 	do
 	{
 		pdata[19] = ++n;
-		randomx_calculate_hash(myMachine, &pdata, 80, hash);
+		randomx_calculate_hash(vm, pdata, 80, hash);
 		if (fulltest(hash, ptarget))
 		{
+			char hash_hex[65] = {0};
+			bin2hex(hash_hex, (unsigned char *)hash, 32);
+
+			char input_hex[161] = {0};
+			bin2hex(input_hex, (unsigned char *)pdata, 80);
+
+			applog(LOG_INFO, "found hash: %s, input: %s, nonce: %d", hash_hex, input_hex, n);
 			*hashes_done = n - first_nonce + 1;
 			suc = 1;
 			break;
 		}
 	} while (n < max_nonce && !work_restart[thr_id].restart);
 
-	randomx_destroy_vm(myMachine);
+	randomx_destroy_vm(vm);
 	randomx_release_dataset(dataset);
 	return suc;
 }

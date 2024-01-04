@@ -398,43 +398,43 @@ json_t *json_rpc_call(CURL *curl, const char *url,
 	applog(LOG_DEBUG, "JSON-RPC call: rpc_req:%s", rpc_req);
 	/* it is assumed that 'curl' is freshly [re]initialized at this pt */
 
-	// if (opt_protocol)
-	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+	if (opt_protocol)
+		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
-	// if (opt_cert)
-	// 	curl_easy_setopt(curl, CURLOPT_CAINFO, opt_cert);
-	// curl_easy_setopt(curl, CURLOPT_ENCODING, "");
-	// curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
-	// curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
-	// curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1);
+	if (opt_cert)
+		curl_easy_setopt(curl, CURLOPT_CAINFO, opt_cert);
+	curl_easy_setopt(curl, CURLOPT_ENCODING, "");
+	curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
+	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
+	curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, all_data_cb);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &all_data);
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, upload_data_cb);
 	curl_easy_setopt(curl, CURLOPT_READDATA, &upload_data);
-	// #if LIBCURL_VERSION_NUM >= 0x071200
-	// 	curl_easy_setopt(curl, CURLOPT_SEEKFUNCTION, &seek_data_cb);
-	// 	curl_easy_setopt(curl, CURLOPT_SEEKDATA, &upload_data);
-	// #endif
+#if LIBCURL_VERSION_NUM >= 0x071200
+	curl_easy_setopt(curl, CURLOPT_SEEKFUNCTION, &seek_data_cb);
+	curl_easy_setopt(curl, CURLOPT_SEEKDATA, &upload_data);
+#endif
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_err_str);
-	// if (opt_redirect)
-	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
-	// curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
-	// curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, resp_hdr_cb);
-	// curl_easy_setopt(curl, CURLOPT_HEADERDATA, &hi);
-	// if (opt_proxy)
-	// {
-	// 	curl_easy_setopt(curl, CURLOPT_PROXY, opt_proxy);
-	// 	curl_easy_setopt(curl, CURLOPT_PROXYTYPE, opt_proxy_type);
-	// }
+	if (opt_redirect)
+		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
+	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, resp_hdr_cb);
+	curl_easy_setopt(curl, CURLOPT_HEADERDATA, &hi);
+	if (opt_proxy)
+	{
+		curl_easy_setopt(curl, CURLOPT_PROXY, opt_proxy);
+		curl_easy_setopt(curl, CURLOPT_PROXYTYPE, opt_proxy_type);
+	}
 	if (userpass)
 	{
 		curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
 		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 	}
-	// #if LIBCURL_VERSION_NUM >= 0x070f06
-	// 	if (flags & JSON_RPC_LONGPOLL)
-	// 		curl_easy_setopt(curl, CURLOPT_SOCKOPTFUNCTION, sockopt_keepalive_cb);
-	// #endif
+#if LIBCURL_VERSION_NUM >= 0x070f06
+	if (flags & JSON_RPC_LONGPOLL)
+		curl_easy_setopt(curl, CURLOPT_SOCKOPTFUNCTION, sockopt_keepalive_cb);
+#endif
 	curl_easy_setopt(curl, CURLOPT_POST, 1);
 
 	if (opt_protocol)
@@ -448,10 +448,10 @@ json_t *json_rpc_call(CURL *curl, const char *url,
 
 	headers = curl_slist_append(headers, "Content-Type: application/json");
 	headers = curl_slist_append(headers, len_hdr);
-	// headers = curl_slist_append(headers, "User-Agent: " USER_AGENT);
-	// headers = curl_slist_append(headers, "X-Mining-Extensions: midstate");
-	// headers = curl_slist_append(headers, "Accept:"); /* disable Accept hdr*/
-	// headers = curl_slist_append(headers, "Expect:"); /* disable Expect hdr*/
+	headers = curl_slist_append(headers, "User-Agent: " USER_AGENT);
+	headers = curl_slist_append(headers, "X-Mining-Extensions: midstate");
+	headers = curl_slist_append(headers, "Accept:"); /* disable Accept hdr*/
+	headers = curl_slist_append(headers, "Expect:"); /* disable Expect hdr*/
 
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 

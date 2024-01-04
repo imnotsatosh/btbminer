@@ -9,7 +9,7 @@
 #include <pthread.h>
 #include <jansson.h>
 #include <curl/curl.h>
-
+#include <string.h>
 #ifdef STDC_HEADERS
 #include <stdlib.h>
 #include <stddef.h>
@@ -99,6 +99,18 @@ static inline uint32_t le32dec(const void *pp)
 			((uint32_t)(p[2]) << 16) + ((uint32_t)(p[3]) << 24));
 }
 #endif
+
+void static inline WriteLE32(unsigned char *ptr, uint32_t x)
+{
+	uint32_t v = htole32(x);
+	memcpy(ptr, (char *)&v, 4);
+}
+
+void static inline WriteBE32(unsigned char *ptr, uint32_t x)
+{
+	uint32_t v = htobe32(x);
+	memcpy(ptr, (char *)&v, 4);
+}
 
 #if !HAVE_DECL_BE32ENC
 static inline void be32enc(void *pp, uint32_t x)

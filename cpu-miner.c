@@ -702,13 +702,20 @@ static bool gbt_work_decode(const json_t *val, struct work *work)
 	}
 
 	/* assemble block header */
-	work->data[0] = swab32(version);
-	for (i = 0; i < 8; i++)
-		work->data[8 - i] = le32dec(prevhash + i);
-	for (i = 0; i < 8; i++)
-		work->data[9 + i] = be32dec((uint32_t *)merkle_tree[0] + i);
-	work->data[17] = swab32(curtime);
-	work->data[18] = le32dec(&bits);
+	unsigned char *d1 = (unsigned char *)work->data;
+	WriteLE32(d1, version); // work->data[0] = swab32(version);
+	memrev((unsigned char *)prevhash, 32);
+	memcpy(&d1[4], (char *)prevhash, 32);
+	// for (i = 0; i < 8; i++)
+	// 	work->data[8 - i] = le32dec(prevhash + i);
+	memcpy(&d1[36], (char *)merkle_tree, 32);
+	// for (i = 0; i < 8; i++)
+	// 	work->data[9 + i] = be32dec((uint32_t *)merkle_tree[0] + i);
+	WriteLE32(&d1[68], curtime);
+	// work->data[17] = swab32(curtime);
+	memrev((unsigned char *)&bits, 4);
+	WriteLE32(&d1[72], bits);
+	// work->data[18] = le32dec(&bits);
 	memset(work->data + 19, 0x00, 52);
 	work->data[20] = 0x80000000;
 	work->data[31] = 0x00000280;
@@ -826,8 +833,8 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 	{
 		char *req;
 
-		for (i = 0; i < ARRAY_SIZE(work->data); i++)
-			be32enc(work->data + i, work->data[i]);
+		// for (i = 0; i < ARRAY_SIZE(work->data); i++)
+		// 	be32enc(work->data + i, work->data[i]);
 		bin2hex(data_str, (unsigned char *)work->data, 80);
 		if (work->workid)
 		{
@@ -2349,7 +2356,7 @@ int main(int argc, char *argv[])
 		if (!thr->q)
 			return 1;
 
-		if (unlikely(pthread_create(&thr->pth, NULL, miner_thread, thr)))
+		if (unlikely(pthread_create(&thr->pth, NULL, miner_thread2, thr)))
 		{
 			applog(LOG_ERR, "thread %d create failed", i);
 			return 1;
