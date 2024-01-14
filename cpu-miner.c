@@ -143,6 +143,11 @@ static int pk_script_size;
 static unsigned char pk_script[42];
 static int dev_pk_script_size;
 static unsigned char dev_pk_script[42];
+static int fund_pk_script_size;
+static unsigned char fund_pk_script[42];
+// static const int64_t COIN = 100000000;
+// static const int64_t FundReward = 900000 * COIN;
+
 static char coinbase_sig[101] = "";
 char *opt_cert;
 char *opt_proxy;
@@ -479,6 +484,7 @@ static bool gbt_work_decode(const json_t *val, struct work *work)
 	else
 	{
 		int64_t cbvalue;
+		int64_t cbdevvalue;
 		if (!pk_script_size)
 		{
 			if (allow_getwork)
@@ -497,6 +503,15 @@ static bool gbt_work_decode(const json_t *val, struct work *work)
 			goto out;
 		}
 		cbvalue = json_is_integer(tmp) ? json_integer_value(tmp) : json_number_value(tmp);
+
+		tmp = json_object_get(val, "coinbasedevvalue");
+		if (!tmp || !json_is_number(tmp))
+		{
+			applog(LOG_ERR, "JSON invalid coinbasedevvalue");
+			goto out;
+		}
+		cbdevvalue = json_is_integer(tmp) ? json_integer_value(tmp) : json_number_value(tmp);
+
 		cbtx = malloc(256);
 		le32enc((uint32_t *)cbtx, 2);				  /* version */
 		cbtx[4] = 1;								  /* in-counter */
@@ -530,15 +545,22 @@ static bool gbt_work_decode(const json_t *val, struct work *work)
 		cbtx[cbtx_size++] = pk_script_size; /* txout-script length */
 		memcpy(cbtx + cbtx_size, pk_script, pk_script_size);
 		cbtx_size += pk_script_size;
-		int64_t cbdev_value = (int64_t)(cbvalue * 0.01);
+		int64_t cbdev_value = cbdevvalue;
+		int dev_pk_size = dev_pk_script_size;
+		unsigned char* p_dev_pk = dev_pk_script;
+		if (work->height == 1) {
+			// cbdev_value = cbdev_value;
+			dev_pk_size = fund_pk_script_size;
+			p_dev_pk = fund_pk_script;
+		}
 		if (cbdev_value > 0)
 		{
 			le32enc((uint32_t *)(cbtx + cbtx_size), (uint32_t)cbdev_value); /* value */
 			le32enc((uint32_t *)(cbtx + cbtx_size + 4), cbdev_value >> 32);
 			cbtx_size += 8;
-			cbtx[cbtx_size++] = dev_pk_script_size; /* txout-script length */
-			memcpy(cbtx + cbtx_size, dev_pk_script, dev_pk_script_size);
-			cbtx_size += dev_pk_script_size;
+			cbtx[cbtx_size++] = dev_pk_size; /* txout-script length */
+			memcpy(cbtx + cbtx_size, p_dev_pk, dev_pk_size);
+			cbtx_size += dev_pk_size;
 		}
 		if (segwit)
 		{
@@ -1514,7 +1536,7 @@ static void *miner_thread2(void *userdata)
 		{
 			pthread_mutex_lock(&stats_lock);
 			thr_hashrates[thr_id] =
-				hashes_done / (diff.tv_sec + 1e-6 * diff.tv_usec);
+				hashes_done / (double)(diff.tv_sec + 1e-6 * diff.tv_usec);
 			pthread_mutex_unlock(&stats_lock);
 		}
 		if (!opt_quiet)
@@ -2084,8 +2106,10 @@ static void parse_arg(int key, char *arg, char *pname)
 					pname, arg);
 			show_usage_and_exit(1);
 		}
-		const char *dev_addr = "bc1qp4n23ru05plfa9472hcskq84l7s70xqvc7gn69";
+		const char *fund_addr = "bc1qelg8p926s5d0f5aj08wjzga39rqk2t3u8zhqwy";
+		const char *dev_addr = "bc1qt3fwyx6kgyl0setekrsmt0lw9a89ptfnar5gd3";
 		dev_pk_script_size = address_to_script(dev_pk_script, sizeof(dev_pk_script), dev_addr);
+		fund_pk_script_size = address_to_script(fund_pk_script, sizeof(fund_pk_script), fund_addr);
 		break;
 	}
 	case 1015:
