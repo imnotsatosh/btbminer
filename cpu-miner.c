@@ -1415,8 +1415,8 @@ static void *miner_thread(void *userdata)
 		{
 			sprintf(s, thr_hashrates[thr_id] >= 1e6 ? "%.0f" : "%.2f",
 					1e-3 * thr_hashrates[thr_id]);
-			applog(LOG_INFO, "thread %d: %lu hashes, %s khash/s",
-				   thr_id, hashes_done, s);
+			// applog(LOG_DEBUG, "thread %d: %lu hashes, %s khash/s",
+			// 	   thr_id, hashes_done, s);
 		}
 		if (opt_benchmark && thr_id == opt_n_threads - 1)
 		{
@@ -1543,8 +1543,8 @@ static void *miner_thread2(void *userdata)
 		{
 			sprintf(s, thr_hashrates[thr_id] >= 1e6 ? "%.0f" : "%.2f",
 					1e-3 * thr_hashrates[thr_id]);
-			applog(LOG_INFO, "thread %d: %lu hashes, %s khash/s",
-				   thr_id, hashes_done, s);
+			// applog(LOG_INFO, "thread %d: %lu hashes, %s khash/s",
+			// 	   thr_id, hashes_done, s);
 		}
 		if (opt_benchmark && thr_id == opt_n_threads - 1)
 		{
@@ -2380,7 +2380,7 @@ int main(int argc, char *argv[])
 		if (!thr->q)
 			return 1;
 
-		if (unlikely(pthread_create(&thr->pth, NULL, miner_thread2, thr)))
+		if (unlikely(pthread_create(&thr->pth, NULL, miner_thread, thr)))
 		{
 			applog(LOG_ERR, "thread %d create failed", i);
 			return 1;

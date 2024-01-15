@@ -515,6 +515,24 @@ static inline int scanhash_sha256d_4way(int thr_id, uint32_t *pdata,
 				sha256d_80_swap(hash, pdata);
 				if (fulltest(hash, ptarget))
 				{
+					uint8_t hash2[32];
+					// char pdata_hex[161] = {0};
+					// bin2hex(pdata_hex, (unsigned char *)pdata, 80);
+					// applog(LOG_INFO, "pdata_for_seed: %s", pdata_hex);
+					sha256d(hash2, (unsigned char *)pdata, 80);
+					int eq = memcmp(hash, hash2, 32);
+					applog(LOG_INFO, " eq: %d", eq);
+					char pdata_str[161] = {0};
+					bin2hex(pdata_str, (unsigned char *)pdata, 80);
+					applog(LOG_DEBUG, "pdata %s", pdata_str);
+					char hash_str[65] = {0};
+					// for (int i = 0; i < 8; i++)
+					// {
+					// 	be32enc(hash + i, hash[7 - i]);
+					// }
+					bin2hex(hash_str, (unsigned char *)hash2, 32);
+					applog(LOG_DEBUG, "found hash: %s, n: %d", hash_str, n);
+					
 					*hashes_done = n - first_nonce + 1;
 					return 1;
 				}
@@ -580,6 +598,24 @@ static inline int scanhash_sha256d_8way(int thr_id, uint32_t *pdata,
 				sha256d_80_swap(hash, pdata);
 				if (fulltest(hash, ptarget))
 				{
+					uint8_t hash2[32];
+					// char pdata_hex[161] = {0};
+					// bin2hex(pdata_hex, (unsigned char *)pdata, 80);
+					// applog(LOG_INFO, "pdata_for_seed: %s", pdata_hex);
+					sha256d(hash2, (unsigned char *)pdata, 80);
+					int eq = memcmp(hash, hash2, 32);
+					applog(LOG_INFO, " eq: %d", eq);
+					char pdata_str[161] = {0};
+					bin2hex(pdata_str, (unsigned char *)pdata, 80);
+					applog(LOG_DEBUG, "pdata %s", pdata_str);
+					char hash_str[65] = {0};
+					// for (int i = 0; i < 8; i++)
+					// {
+					// 	be32enc(hash + i, hash[7 - i]);
+					// }
+					bin2hex(hash_str, (unsigned char *)hash2, 32);
+					applog(LOG_DEBUG, "found hash: %s, n: %d", hash_str, n);
+					
 					*hashes_done = n - first_nonce + 1;
 					return 1;
 				}
@@ -634,6 +670,16 @@ int scanhash_sha256d(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 			sha256d_80_swap(hash, pdata);
 			if (fulltest(hash, ptarget))
 			{
+				char pdata_str[161] = {0};
+				bin2hex(pdata_str, (unsigned char *)pdata, 80);
+				applog(LOG_DEBUG, "pdata %s", pdata);
+				char hash_str[65];
+				// for (int i = 0; i < 8; i++)
+				// {
+				// 	be32enc(hash + i, hash[7 - i]);
+				// }
+				bin2hex(hash_str, (unsigned char *)hash, 32);
+				applog(LOG_DEBUG, "found hash: %s, n: %d", hash, n);
 				*hashes_done = n - first_nonce + 1;
 				return 1;
 			}
