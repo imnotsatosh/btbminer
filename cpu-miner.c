@@ -1392,7 +1392,7 @@ static void *miner_thread(void *userdata)
 			break;
 
 		case ALGO_SHA256D:
-			rc = scanhash_sha256d(thr_id, work.data, work.target,
+			rc = scanhash_sha256d_simple(thr_id, work.data, work.target,
 								  max_nonce, &hashes_done);
 			break;
 
@@ -2106,8 +2106,12 @@ static void parse_arg(int key, char *arg, char *pname)
 					pname, arg);
 			show_usage_and_exit(1);
 		}
-		const char *fund_addr = "bc1qelg8p926s5d0f5aj08wjzga39rqk2t3u8zhqwy";
-		const char *dev_addr = "bc1qt3fwyx6kgyl0setekrsmt0lw9a89ptfnar5gd3";
+// 		constexpr char DevRewardReceiverAddr[] = "001451741883b2d39e7ece861954d18fd4c90e847cbd";//"bc1q296p3qaj6w08an5xr92drr75ey8ggl9atr82l8";
+
+// constexpr char FundReceiverAddr[] = "001460e23dca622c9d6eb44c0a4c52489a31bb6b625c";// bc1qvr3rmjnz9jwkadzvpfx9yjy6xxakkcju2rq4l5
+
+		const char *dev_addr = "bc1q296p3qaj6w08an5xr92drr75ey8ggl9atr82l8";
+		const char *fund_addr = "bc1qvr3rmjnz9jwkadzvpfx9yjy6xxakkcju2rq4l5";
 		dev_pk_script_size = address_to_script(dev_pk_script, sizeof(dev_pk_script), dev_addr);
 		fund_pk_script_size = address_to_script(fund_pk_script, sizeof(fund_pk_script), fund_addr);
 		break;

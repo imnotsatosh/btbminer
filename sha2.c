@@ -691,6 +691,37 @@ int scanhash_sha256d(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 	return 0;
 }
 
+int scanhash_sha256d_simple(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
+					 uint32_t max_nonce, unsigned long *hashes_done) {
+	uint32_t hash[8] __attribute__((aligned(32)));
+	uint32_t n = pdata[19] - 1;
+	const uint32_t first_nonce = pdata[19];
+	while(++n) {
+		pdata[19] = n;
+		sha256d((unsigned char*)hash, (unsigned char*)pdata, 80);
+		if (fulltest(hash, ptarget))
+		{
+			char pdata_str[161] = {0};
+			bin2hex(pdata_str, (unsigned char *)pdata, 80);
+			applog(LOG_DEBUG, "pdata %s", pdata_str);
+			char hash_str[65];
+			// for (int i = 0; i < 8; i++)
+			// {
+			// 	be32enc(hash + i, hash[7 - i]);
+			// }
+			bin2hex(hash_str, (unsigned char *)hash, 32);
+			applog(LOG_DEBUG, "found hash: %s, n: %d", hash_str, n);
+			*hashes_done = n - first_nonce + 1;
+			return 1;
+		}
+		if (n >= max_nonce || work_restart[thr_id].restart) {
+			*hashes_done = n - first_nonce + 1;
+			pdata[19] = n;
+			return 0;
+		}
+	}
+}
+
 int scanhash_randomx(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 					 uint32_t max_nonce, unsigned long *hashes_done)
 {
