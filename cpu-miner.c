@@ -131,7 +131,7 @@ static bool opt_quiet = false;
 static int opt_retries = -1;
 static int opt_fail_pause = 30;
 int opt_timeout = 0;
-static int opt_scantime = 5;
+static int opt_scantime = 5*60;
 static enum algos opt_algo = ALGO_SCRYPT;
 static int opt_scrypt_n = 1024;
 static int opt_n_threads;
@@ -2384,7 +2384,7 @@ int main(int argc, char *argv[])
 		if (!thr->q)
 			return 1;
 
-		if (unlikely(pthread_create(&thr->pth, NULL, miner_thread, thr)))
+		if (unlikely(pthread_create(&thr->pth, NULL, miner_thread2, thr)))
 		{
 			applog(LOG_ERR, "thread %d create failed", i);
 			return 1;

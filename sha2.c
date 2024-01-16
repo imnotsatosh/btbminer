@@ -722,9 +722,22 @@ int scanhash_sha256d_simple(int thr_id, uint32_t *pdata, const uint32_t *ptarget
 	}
 }
 
+typedef struct  {
+	randomx_dataset *dataset;
+	randomx_cache *cache;
+	uint32_t startItem;
+	uint32_t itemCount;
+}dataset_init_thread_args;
+
+void randomx_init_dataset_thread( dataset_init_thread_args* args) {
+	randomx_init_dataset(args->dataset, args->cache, args->startItem, args->itemCount);
+}
+
 int scanhash_randomx(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 					 uint32_t max_nonce, unsigned long *hashes_done)
 {
+	struct timeval tv_start, tv_end, diff;
+	gettimeofday(&tv_start, NULL);
 	randomx_flags flags = RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_ARGON2_SSSE3 | RANDOMX_FLAG_ARGON2_AVX2;
 	randomx_cache *cache = randomx_alloc_cache(flags);
 	if (!cache)
@@ -766,7 +779,32 @@ int scanhash_randomx(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 		return 0;
 	}
 	uint32_t datasetItemCount = randomx_dataset_item_count();
-	randomx_init_dataset(dataset, cache, 0, datasetItemCount);
+	const int initThreadCount = 4;
+	pthread_t* threads = malloc(sizeof(pthread_t) * initThreadCount);
+	dataset_init_thread_args* thread_args = malloc(sizeof(dataset_init_thread_args) * initThreadCount);
+	if (initThreadCount > 1) {
+		int perThread = datasetItemCount / initThreadCount;
+		int remainder = datasetItemCount % initThreadCount;
+		uint32_t startItem = 0;
+		for (int i = 0; i < initThreadCount; ++i) {
+			int count = perThread + (i == initThreadCount - 1 ? remainder : 0);
+			dataset_init_thread_args args = {
+				dataset,
+				cache,
+				startItem,
+				count
+			};
+			thread_args[i] = args;
+			pthread_create(&threads[i], NULL, (void *)randomx_init_dataset_thread, thread_args + i);
+			startItem += count;
+		}
+		for (unsigned i = 0; i < initThreadCount; ++i) {
+			pthread_join(threads[i], NULL);
+		}
+	}
+	else {
+		randomx_init_dataset(dataset, cache, 0, datasetItemCount);
+	}
 	randomx_release_cache(cache);
 
 	randomx_vm *vm = randomx_create_vm(flags, 0, dataset);
@@ -776,6 +814,11 @@ int scanhash_randomx(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 		randomx_release_dataset(dataset);
 		return 0;
 	}
+	gettimeofday(&tv_end, NULL);
+	timeval_subtract(&diff, &tv_end, &tv_start);
+	applog(LOG_DEBUG, "randomx initializing in %d ms",
+			diff.tv_sec * 1000 + diff.tv_usec / 1000);
+
 	uint32_t hash[8] __attribute__((aligned(32)));
 	int suc = 0;
 	do
