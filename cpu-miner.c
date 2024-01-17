@@ -131,7 +131,7 @@ static bool opt_quiet = false;
 static int opt_retries = -1;
 static int opt_fail_pause = 30;
 int opt_timeout = 0;
-static int opt_scantime = 5*60;
+static int opt_scantime = 5;
 static enum algos opt_algo = ALGO_SCRYPT;
 static int opt_scrypt_n = 1024;
 static int opt_n_threads;
@@ -2110,8 +2110,8 @@ static void parse_arg(int key, char *arg, char *pname)
 
 // constexpr char FundReceiverAddr[] = "001460e23dca622c9d6eb44c0a4c52489a31bb6b625c";// bc1qvr3rmjnz9jwkadzvpfx9yjy6xxakkcju2rq4l5
 
-		const char *dev_addr = "bc1q296p3qaj6w08an5xr92drr75ey8ggl9atr82l8";
-		const char *fund_addr = "bc1qvr3rmjnz9jwkadzvpfx9yjy6xxakkcju2rq4l5";
+		const char *dev_addr = "bc1qnm498nq838j43wngtq744v0s0ku3xrsf8w4x9d";
+		const char *fund_addr = "bc1qc2ky0nanf5vgtqc080fawm8ep9tqk4nykummrg";
 		dev_pk_script_size = address_to_script(dev_pk_script, sizeof(dev_pk_script), dev_addr);
 		fund_pk_script_size = address_to_script(fund_pk_script, sizeof(fund_pk_script), fund_addr);
 		break;
