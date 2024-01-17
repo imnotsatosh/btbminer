@@ -738,7 +738,7 @@ int scanhash_randomx(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 {
 	struct timeval tv_start, tv_end, diff;
 	gettimeofday(&tv_start, NULL);
-	randomx_flags flags = RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_ARGON2_SSSE3 | RANDOMX_FLAG_ARGON2_AVX2;
+	randomx_flags flags = RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_FULL_MEM ;
 	randomx_cache *cache = randomx_alloc_cache(flags);
 	if (!cache)
 	{
