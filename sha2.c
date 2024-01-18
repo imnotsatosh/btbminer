@@ -13,6 +13,7 @@
 #include "randomx/randomx.h"
 #include <string.h>
 #include <inttypes.h>
+#include <cpuid.h>
 
 #if defined(USE_ASM) &&                            \
 	(defined(__x86_64__) ||                        \
@@ -733,12 +734,41 @@ void randomx_init_dataset_thread( dataset_init_thread_args* args) {
 	randomx_init_dataset(args->dataset, args->cache, args->startItem, args->itemCount);
 }
 
+
+static inline bool isAVX2Supported() {
+    unsigned int eax, ebx, ecx, edx;
+    __get_cpuid(1, &eax, &ebx, &ecx, &edx);
+    bool osUsesXSAVE_XRSTORE = ecx & bit_XSAVE;
+    bool cpuAVX2Support = ecx & bit_AVX2;
+
+    if (osUsesXSAVE_XRSTORE && cpuAVX2Support) {
+        // Check if the OS will save the YMM registers
+        __get_cpuid(0, &eax, &ebx, &ecx, &edx);
+        return ecx & bit_OSXSAVE;
+    }
+
+    return false;
+}
+
+static inline bool isSSSE3Supported() {
+    unsigned int eax, ebx, ecx, edx;
+    __get_cpuid(1, &eax, &ebx, &ecx, &edx);
+    return ecx & bit_SSSE3;
+}
+
+
 int scanhash_randomx(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 					 uint32_t max_nonce, unsigned long *hashes_done)
 {
 	struct timeval tv_start, tv_end, diff;
 	gettimeofday(&tv_start, NULL);
-	randomx_flags flags = RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_FULL_MEM ;
+	randomx_flags flags = RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT  ;
+	if (isAVX2Supported()) {
+		flags |= RANDOMX_FLAG_ARGON2_AVX2;
+	}
+	if (isSSSE3Supported()) {
+		flags |= RANDOMX_FLAG_ARGON2_SSSE3;
+	}
 	randomx_cache *cache = randomx_alloc_cache(flags);
 	if (!cache)
 	{
