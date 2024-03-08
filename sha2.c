@@ -779,10 +779,11 @@ int scanhash_randomx(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 	const uint32_t first_nonce = pdata[19];
 	uint8_t seed[32];
 	pdata[19] = 0;
+	uint32_t keystore[4] ={pdata[0], pdata[17]/345678, pdata[18], 0};
 	// char pdata_hex[161] = {0};
 	// bin2hex(pdata_hex, (unsigned char *)pdata, 80);
 	// applog(LOG_INFO, "pdata_for_seed: %s", pdata_hex);
-	sha256d(seed, (unsigned char *)pdata, 80);
+	sha256d(seed, (unsigned char *)keystore, 16);
 
 	// char seed_hex[65] = {0};
 	// bin2hex(seed_hex, (unsigned char *)seed, 32);
