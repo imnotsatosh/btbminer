@@ -141,12 +141,6 @@ static char *rpc_userpass;
 static char *rpc_user, *rpc_pass;
 static int pk_script_size;
 static unsigned char pk_script[42];
-static int dev_pk_script_size;
-static unsigned char dev_pk_script[42];
-static int fund_pk_script_size;
-static unsigned char fund_pk_script[42];
-// static const int64_t COIN = 100000000;
-// static const int64_t FundReward = 900000 * COIN;
 
 static char coinbase_sig[101] = "";
 char *opt_cert;
@@ -504,14 +498,6 @@ static bool gbt_work_decode(const json_t *val, struct work *work)
 		}
 		cbvalue = json_is_integer(tmp) ? json_integer_value(tmp) : json_number_value(tmp);
 
-		tmp = json_object_get(val, "coinbasedevvalue");
-		if (!tmp || !json_is_number(tmp))
-		{
-			applog(LOG_ERR, "JSON invalid coinbasedevvalue");
-			goto out;
-		}
-		cbdevvalue = json_is_integer(tmp) ? json_integer_value(tmp) : json_number_value(tmp);
-
 		cbtx = malloc(256);
 		le32enc((uint32_t *)cbtx, 2);				  /* version */
 		cbtx[4] = 1;								  /* in-counter */
@@ -538,30 +524,14 @@ static bool gbt_work_decode(const json_t *val, struct work *work)
 		cbtx[41] = cbtx_size - 42;							 /* scriptsig length */
 		le32enc((uint32_t *)(cbtx + cbtx_size), 0xffffffff); /* sequence */
 		cbtx_size += 4;
-		cbtx[cbtx_size++] = segwit ? 3 : 2;							/* out-counter */
+		cbtx[cbtx_size++] = segwit ? 2 : 1;							/* out-counter */
 		le32enc((uint32_t *)(cbtx + cbtx_size), (uint32_t)cbvalue); /* value */
 		le32enc((uint32_t *)(cbtx + cbtx_size + 4), cbvalue >> 32);
 		cbtx_size += 8;
 		cbtx[cbtx_size++] = pk_script_size; /* txout-script length */
 		memcpy(cbtx + cbtx_size, pk_script, pk_script_size);
 		cbtx_size += pk_script_size;
-		int64_t cbdev_value = cbdevvalue;
-		int dev_pk_size = dev_pk_script_size;
-		unsigned char* p_dev_pk = dev_pk_script;
-		if (work->height == 1) {
-			// cbdev_value = cbdev_value;
-			dev_pk_size = fund_pk_script_size;
-			p_dev_pk = fund_pk_script;
-		}
-		if (cbdev_value > 0)
-		{
-			le32enc((uint32_t *)(cbtx + cbtx_size), (uint32_t)cbdev_value); /* value */
-			le32enc((uint32_t *)(cbtx + cbtx_size + 4), cbdev_value >> 32);
-			cbtx_size += 8;
-			cbtx[cbtx_size++] = dev_pk_size; /* txout-script length */
-			memcpy(cbtx + cbtx_size, p_dev_pk, dev_pk_size);
-			cbtx_size += dev_pk_size;
-		}
+
 		if (segwit)
 		{
 			unsigned char(*wtree)[32] = calloc(tx_count + 2, 32);
@@ -2106,14 +2076,6 @@ static void parse_arg(int key, char *arg, char *pname)
 					pname, arg);
 			show_usage_and_exit(1);
 		}
-// 		constexpr char DevRewardReceiverAddr[] = "001451741883b2d39e7ece861954d18fd4c90e847cbd";//"bc1q296p3qaj6w08an5xr92drr75ey8ggl9atr82l8";
-
-// constexpr char FundReceiverAddr[] = "001460e23dca622c9d6eb44c0a4c52489a31bb6b625c";// bc1qvr3rmjnz9jwkadzvpfx9yjy6xxakkcju2rq4l5
-
-		const char *dev_addr = "bc1qnm498nq838j43wngtq744v0s0ku3xrsf8w4x9d";
-		const char *fund_addr = "bc1qc2ky0nanf5vgtqc080fawm8ep9tqk4nykummrg";
-		dev_pk_script_size = address_to_script(dev_pk_script, sizeof(dev_pk_script), dev_addr);
-		fund_pk_script_size = address_to_script(fund_pk_script, sizeof(fund_pk_script), fund_addr);
 		break;
 	}
 	case 1015:
