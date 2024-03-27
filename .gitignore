@@ -25,4 +25,6 @@ config.guess
 config.sub
 
 mingw32-config.cache
-
+*.S.orig
+*~
+.vscode/
